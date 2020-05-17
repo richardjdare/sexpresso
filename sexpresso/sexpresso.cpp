@@ -289,10 +289,12 @@ namespace sexpresso {
 				for(; i != str.end(); ++i) {
 					if(*i == '\\') { ++i; continue; }
 					if(*i == '"') break;
+                    /* rjd: modified because Swank server will send us strings containing newlines
+
 					if(*i == '\n') {
 						err = std::string{"Unexpected newline in string literal"};
 						return Sexp{};
-					}
+                    }*/
 				}
 				if(i == str.end()) {
 					err = std::string{"Unterminated string literal"};

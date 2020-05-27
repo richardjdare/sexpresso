@@ -8,7 +8,9 @@ Sexpresso aims to be very simple, nodes are parsed either as s-expressions or st
 a number would be parsed a string, so if you expect a node to be a number, please convert the
 string to a number!
 
----
+-----
+
+
 *note from richardjdare:* I have hacked around with this fork for my own purposes. *It may not do what you want!* Please take a look at the original [(https://github.com/BitPuffin/sexpresso)]
 
 My Changes:
@@ -17,8 +19,10 @@ My Changes:
  * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.position. Position has no meaning in Sexp's that were not created by the parser.
  
  (end of richardjdare's note)
- 
----
+
+
+-----
+
 * How to use
 
 By default Sexpresso uses [[http://doc.cat-v.org/bell_labs/pikestyle][pike style]] which means that it does *not* include any header files

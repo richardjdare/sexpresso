@@ -1,7 +1,7 @@
 // Author: Isak Andersson 2016 bitpuffin dot com
 
 // If you don't opt out, copy and paste dependencies before include
-#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
+//rjd#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
 #ifndef SEXPRESSO_HEADER
 #define SEXPRESSO_HEADER
 #include <vector>
@@ -9,7 +9,7 @@
 #include <cstdint>
 // #include "sexpresso.hpp"
 #endif
-#endif
+//rjd#endif
 
 namespace sexpresso {
 	enum class SexpValueKind : uint8_t { SEXP, STRING };
@@ -18,13 +18,18 @@ namespace sexpresso {
 
 	struct Sexp {
 		Sexp();
+        Sexp(int64_t position);
 		Sexp(std::string const& strval);
+        Sexp(std::string const& strval,int64_t position);
 		Sexp(std::vector<Sexp> const& sexpval);
+        Sexp(std::vector<Sexp> const& sexpval, int64_t position);
 		SexpValueKind kind;
-		struct { std::vector<Sexp> sexp; std::string str; } value;
+        int64_t position;
+        struct { std::vector<Sexp> sexp; std::string str; int64_t position; } value;
 		auto addChild(Sexp sexp) -> void;
 		auto addChild(std::string str) -> void;
 		auto addChildUnescaped(std::string str) -> void;
+        auto addChildUnescaped(std::string str, int64_t position) -> void;
 		auto addExpression(std::string const& str) -> void;
 		auto childCount() const -> size_t;
 		auto getChild(size_t idx) -> Sexp&; // Call only if Sexp is a Sexp
@@ -39,6 +44,7 @@ namespace sexpresso {
 		auto equal(Sexp const& other) const -> bool;
 		auto arguments() -> SexpArgumentIterator;
 		static auto unescaped(std::string strval) -> Sexp;
+        static auto unescaped(std::string strval, int64_t position) -> Sexp;
 	};
 
 	auto parse(std::string const& str, std::string& err) -> Sexp;

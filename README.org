@@ -16,7 +16,7 @@ string to a number!
 My Changes:
 
  * Allow newlines inside strings
- * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.position. Position has no meaning in Sexps that were not created by the parser.
+ * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.startpos and sexpresso::Sexp.endpos. These variables have no meaning in Sexps that were not created by the parser.
  
  (end of richardjdare's note)
 

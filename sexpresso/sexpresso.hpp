@@ -1,7 +1,7 @@
 // Author: Isak Andersson 2016 bitpuffin dot com
 
 // If you don't opt out, copy and paste dependencies before include
-//rjd#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
+#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
 #ifndef SEXPRESSO_HEADER
 #define SEXPRESSO_HEADER
 #include <vector>
@@ -9,10 +9,11 @@
 #include <cstdint>
 // #include "sexpresso.hpp"
 #endif
-//rjd#endif
+#endif
 
 namespace sexpresso {
-	enum class SexpValueKind : uint8_t { SEXP, STRING };
+    enum class SexpValueKind : uint8_t { SEXP, ATOM };
+    enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING };
 
 	struct SexpArgumentIterator;
 
@@ -20,10 +21,13 @@ namespace sexpresso {
 		Sexp();
         Sexp(int64_t startpos, int64_t endpos = 0);
 		Sexp(std::string const& strval);
+        Sexp(std::string const& strval, SexpAtomKind atomkind);
         Sexp(std::string const& strval,int64_t startpos, int64_t endpos = 0);
+        Sexp(std::string const& strval, int64_t startpos, int64_t endpos, SexpAtomKind atomkind);
 		Sexp(std::vector<Sexp> const& sexpval);
         Sexp(std::vector<Sexp> const& sexpval, int64_t startpos, int64_t endpos = 0);
 		SexpValueKind kind;
+        SexpAtomKind atomkind;
         int64_t startpos;
         int64_t endpos;
         struct { std::vector<Sexp> sexp; std::string str; int64_t startpos; int64_t endpos = 0;} value;
@@ -31,6 +35,7 @@ namespace sexpresso {
 		auto addChild(std::string str) -> void;
 		auto addChildUnescaped(std::string str) -> void;
         auto addChildUnescaped(std::string str, int64_t startpos, int64_t endpos = 0) -> void;
+        auto addChildUnescaped(std::string str, SexpAtomKind atomkind, int64_t startpos, int64_t endpos = 0) -> void;
 		auto addExpression(std::string const& str) -> void;
 		auto childCount() const -> size_t;
 		auto getChild(size_t idx) -> Sexp&; // Call only if Sexp is a Sexp
@@ -46,6 +51,7 @@ namespace sexpresso {
 		auto arguments() -> SexpArgumentIterator;
 		static auto unescaped(std::string strval) -> Sexp;
         static auto unescaped(std::string strval, int64_t startpos, int64_t endpos = 0) -> Sexp;
+        static auto unescaped(std::string strval, SexpAtomKind atomkind, int64_t startpos, int64_t endpos = 0) -> Sexp;
 	};
 
 	auto parse(std::string const& str, std::string& err) -> Sexp;

@@ -240,6 +240,19 @@ namespace sexpresso {
     }
 
     static auto toStringImpl(Sexp const& sexp, std::ostringstream& ostream) -> void {
+        switch(sexp.quotekind){
+            case SexpQuoteKind::BACKQUOTE:
+                ostream << "`";
+                break;
+            case SexpQuoteKind::SINGLEQUOTE:
+                ostream << "'";
+                break;
+            case SexpQuoteKind::FUNCQUOTE:
+                ostream << "#'";
+                break;
+            default: break;
+        }
+
 		switch(sexp.kind) {
         case SexpValueKind::ATOM:
             switch(sexp.atomkind){
@@ -273,6 +286,20 @@ namespace sexpresso {
 
 	auto Sexp::toString() const -> std::string {
 		auto ostream = std::ostringstream{};
+
+        switch(this->quotekind){
+            case SexpQuoteKind::BACKQUOTE:
+                ostream << "`";
+                break;
+            case SexpQuoteKind::SINGLEQUOTE:
+                ostream << "'";
+                break;
+            case SexpQuoteKind::FUNCQUOTE:
+                ostream << "#'";
+                break;
+            default: break;
+        }
+
 		// outer sexp does not get surrounded by ()
 		switch(this->kind) {
         case SexpValueKind::ATOM:

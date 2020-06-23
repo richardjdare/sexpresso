@@ -17,6 +17,9 @@ My Changes:
 
  * Allow newlines inside strings
  * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.startpos and sexpresso::Sexp.endpos. These variables have no meaning in Sexps that were not created by the parser.
+ * I distinguish between strings and symbols. SexpKind is now either SEXP or ATOM. ATOMS can be SYMBOL or STRING.
+ * Sexps can be quoted. Either SINGLEQUOTE, BACKQUOTE, or FUNCQUOTE (Common Lisp #' function quote)
+ * the parser can handle Common Lisp block comments.
  
  (end of richardjdare's note)
 

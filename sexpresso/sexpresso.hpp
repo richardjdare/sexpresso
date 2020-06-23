@@ -1,7 +1,7 @@
 // Author: Isak Andersson 2016 bitpuffin dot com
 
 // If you don't opt out, copy and paste dependencies before include
-#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
+//rjd#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
 #ifndef SEXPRESSO_HEADER
 #define SEXPRESSO_HEADER
 #include <vector>
@@ -9,12 +9,12 @@
 #include <cstdint>
 // #include "sexpresso.hpp"
 #endif
-#endif
+//rjd#endif
 
 namespace sexpresso {
     enum class SexpValueKind : uint8_t { SEXP, ATOM };
     enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING };
-
+    enum class SexpQuoteKind : uint8_t { NONE, SINGLEQUOTE, BACKQUOTE, FUNCQUOTE };
 	struct SexpArgumentIterator;
 
 	struct Sexp {
@@ -28,6 +28,7 @@ namespace sexpresso {
         Sexp(std::vector<Sexp> const& sexpval, int64_t startpos, int64_t endpos = 0);
 		SexpValueKind kind;
         SexpAtomKind atomkind;
+        SexpQuoteKind quotekind;
         int64_t startpos;
         int64_t endpos;
         struct { std::vector<Sexp> sexp; std::string str; int64_t startpos; int64_t endpos = 0;} value;

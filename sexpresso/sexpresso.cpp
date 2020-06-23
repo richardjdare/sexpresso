@@ -18,10 +18,12 @@ namespace sexpresso {
 	Sexp::Sexp() {
 		this->kind = SexpValueKind::SEXP;
         this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
 	}
     Sexp::Sexp(int64_t startpos, int64_t endpos){
         this->kind = SexpValueKind::SEXP;
         this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
         this->startpos = startpos;
         this->value.startpos = startpos;
         this->endpos = endpos;
@@ -30,16 +32,19 @@ namespace sexpresso {
 	Sexp::Sexp(std::string const& strval) {
         this->kind = SexpValueKind::ATOM;
         this->atomkind = SexpAtomKind::SYMBOL;
+        this->quotekind = SexpQuoteKind::NONE;
 		this->value.str = escape(strval);
 	}
     Sexp::Sexp(std::string const& strval, SexpAtomKind atomkind) {
         this->kind = SexpValueKind::ATOM;
+        this->quotekind = SexpQuoteKind::NONE;
         this->atomkind = atomkind;
         this->value.str = escape(strval);
     }
     Sexp::Sexp(std::string const& strval, int64_t startpos, int64_t endpos) {
         this->kind = SexpValueKind::ATOM;
         this->atomkind = SexpAtomKind::SYMBOL;
+        this->quotekind = SexpQuoteKind::NONE;
         this->value.str = escape(strval);
         this->startpos = startpos;
         this->value.startpos = startpos;
@@ -48,6 +53,7 @@ namespace sexpresso {
     }
     Sexp::Sexp(std::string const& strval, int64_t startpos, int64_t endpos, SexpAtomKind atomkind) {
         this->kind = SexpValueKind::ATOM;
+        this->quotekind = SexpQuoteKind::NONE;
         this->atomkind = atomkind;
         this->value.str = escape(strval);
         this->startpos = startpos;
@@ -58,11 +64,13 @@ namespace sexpresso {
 	Sexp::Sexp(std::vector<Sexp> const& sexpval) {
 		this->kind = SexpValueKind::SEXP;
         this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
 		this->value.sexp = sexpval;
 	}
     Sexp::Sexp(std::vector<Sexp> const& sexpval, int64_t startpos, int64_t endpos) {
         this->kind = SexpValueKind::SEXP;
         this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
         this->value.sexp = sexpval;
         this->startpos = startpos;
         this->value.startpos = startpos; // rjd?
@@ -312,7 +320,6 @@ namespace sexpresso {
 		switch(this->kind) {
 		case SexpValueKind::SEXP:
 			return childrenEqual(this->value.sexp, other.value.sexp);
-			break;
         case SexpValueKind::ATOM:
 			return this->value.str == other.value.str;
 		}
@@ -352,6 +359,7 @@ namespace sexpresso {
 		auto sexprstack = std::stack<Sexp>{};
         sexprstack.push(Sexp(0)); // root
 		auto nextiter = str.begin();
+        SexpQuoteKind quoted = SexpQuoteKind::NONE;
 		for(auto iter = nextiter; iter != str.end(); iter = nextiter) {
 			nextiter = iter + 1;
 			if(std::isspace(*iter)) continue;
@@ -359,6 +367,10 @@ namespace sexpresso {
 			switch(*iter) {
 			case '(':
                 sexprstack.push(Sexp(iter - str.begin(), nextiter - str.begin()));
+                if(quoted != SexpQuoteKind::NONE){
+                    sexprstack.top().quotekind = quoted;
+                    quoted = SexpQuoteKind::NONE;
+                }
 				break;
 			case ')': {
 				auto topsexp = std::move(sexprstack.top());
@@ -372,18 +384,20 @@ namespace sexpresso {
 				top.addChild(std::move(topsexp));
 				break;
 			}
+            case '\'': {
+                quoted = SexpQuoteKind::SINGLEQUOTE;
+                break;
+            }
+            case '`': {
+                quoted = SexpQuoteKind::BACKQUOTE;
+                break;
+            }
 			case '"': {
 				auto i = iter+1;
 				auto start = i;
 				for(; i != str.end(); ++i) {
 					if(*i == '\\') { ++i; continue; }
 					if(*i == '"') break;
-                    /* rjd: modified because Swank server will send us strings containing newlines
-
-					if(*i == '\n') {
-						err = std::string{"Unexpected newline in string literal"};
-						return Sexp{};
-                    }*/
 				}
 				if(i == str.end()) {
 					err = std::string{"Unterminated string literal"};
@@ -411,9 +425,14 @@ namespace sexpresso {
 						resultstr.push_back(*it);
 					}
 				}
-                //auto n = i + 1;
+
                 int64_t x = i - str.begin();
                 sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), x);
+                if(quoted != SexpQuoteKind::NONE){
+                    sexprstack.top().value.sexp.back().quotekind = quoted;
+                    quoted = SexpQuoteKind::NONE;
+                }
+
                 std::cout << resultstr << " startpos = " << iter - str.begin() << " : endpos = " << x  << "\n";
 
 				nextiter = i + 1;
@@ -423,13 +442,52 @@ namespace sexpresso {
 				for(; nextiter != str.end() && *nextiter != '\n' && *nextiter != '\r'; ++nextiter) {}
 				for(; nextiter != str.end() && (*nextiter == '\n' || *nextiter == '\r'); ++nextiter) {}
 				break;
-			default:
+            case '#':{
+                //rjd: uses fall-through
+                bool willbreak = false;
+                switch(*nextiter){
+                    case '\'': {
+                        quoted = SexpQuoteKind::FUNCQUOTE;
+                        nextiter += 1;
+                        willbreak = true;
+                        break;
+                    }
+                    case '|': {
+                        auto nexti = iter + 1;
+                        int commentcount = 1;
+                        auto i = nexti;
+                        for(; i != str.end(); i = nexti) {
+                            nexti = i + 1;
+                            if(*i == '#' && *nexti == '|'){
+                                ++commentcount;
+                            }
+                            else if(*i == '|' && *nexti == '#'){
+                                --commentcount;
+                            }
+                            if(commentcount == 0) break;
+                        }
+                        if(i == str.end()) {
+                            err = std::string{"Unclosed block comment"};
+                            return Sexp{};
+                        }
+                        nextiter = i + 2;
+                        willbreak = true;
+                    }
+                }
+                if(willbreak) break;
+                [[clang::fallthrough]];
+            }
+             default:
 				auto symend = std::find_if(iter, str.end(), [](char const& c) { return std::isspace(c) || c == ')' || c == '('; });
 				auto& top = sexprstack.top();
                 auto x = symend - str.begin();
     //            std::cout << std::string{iter,symend} << " startpos = " << iter - str.begin() << " : endpos = " << x << "\n";
      //           std::cout << "dist is " << std::distance(iter,symend) << " symend = " << std::string{iter,symend}.length() << "\n";
                 top.addChild(Sexp{std::string{iter, symend}, iter - str.begin(),x});
+                if(quoted != SexpQuoteKind::NONE){
+                    top.value.sexp.back().quotekind = quoted;
+                    quoted = SexpQuoteKind::NONE;
+                }
 				nextiter = symend;
 			}
 		}

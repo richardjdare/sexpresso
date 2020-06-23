@@ -19,7 +19,8 @@ My Changes:
  * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.startpos and sexpresso::Sexp.endpos. These variables have no meaning in Sexps that were not created by the parser.
  * I distinguish between strings and symbols. SexpKind is now either SEXP or ATOM. ATOMS can be SYMBOL or STRING.
  * Sexps can be quoted. Either SINGLEQUOTE, BACKQUOTE, or FUNCQUOTE (Common Lisp #' function quote)
- * the parser can handle Common Lisp block comments.
+ * The parser can handle Common Lisp block comments.
+ * Added ParseBroken(). When it hits a parse error, it closes off the sexps it sucessfully parsed and returns them. A symbol is added at the point of error.
  
  (end of richardjdare's note)
 

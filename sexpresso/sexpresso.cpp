@@ -25,9 +25,9 @@ namespace sexpresso {
         this->atomkind = SexpAtomKind::NONE;
         this->quotekind = SexpQuoteKind::NONE;
         this->startpos = startpos;
-        this->value.startpos = startpos;
+        this->value.startpos = 0;
         this->endpos = endpos;
-        this->value.endpos = endpos;
+        this->value.endpos = 0;
     }
 	Sexp::Sexp(std::string const& strval) {
         this->kind = SexpValueKind::ATOM;
@@ -47,9 +47,9 @@ namespace sexpresso {
         this->quotekind = SexpQuoteKind::NONE;
         this->value.str = escape(strval);
         this->startpos = startpos;
-        this->value.startpos = startpos;
+        this->value.startpos = 0;
         this->endpos = endpos;
-        this->value.endpos = endpos;
+        this->value.endpos = 0;
     }
     Sexp::Sexp(std::string const& strval, int64_t startpos, int64_t endpos, SexpAtomKind atomkind) {
         this->kind = SexpValueKind::ATOM;
@@ -57,9 +57,9 @@ namespace sexpresso {
         this->atomkind = atomkind;
         this->value.str = escape(strval);
         this->startpos = startpos;
-        this->value.startpos = startpos;
+        this->value.startpos = 0;
         this->endpos = endpos;
-        this->value.endpos = endpos;
+        this->value.endpos = 0;
     }
 	Sexp::Sexp(std::vector<Sexp> const& sexpval) {
 		this->kind = SexpValueKind::SEXP;
@@ -73,16 +73,15 @@ namespace sexpresso {
         this->quotekind = SexpQuoteKind::NONE;
         this->value.sexp = sexpval;
         this->startpos = startpos;
-        this->value.startpos = startpos; // rjd?
+        this->value.startpos = 0;
         this->endpos = endpos;
-        this->value.endpos = endpos;
+        this->value.endpos = 0;
     }
 	auto Sexp::addChild(Sexp sexp) -> void {
         if(this->kind == SexpValueKind::ATOM) {
 			this->kind = SexpValueKind::SEXP;
-            this->value.sexp.push_back(Sexp{std::move(this->value.str), this->startpos});
+            this->value.sexp.push_back(Sexp{std::move(this->value.str), this->startpos, this->endpos});
 		}
-  //      this->endpos += sexp.endpos;
 		this->value.sexp.push_back(std::move(sexp));
 	}
 
@@ -96,11 +95,9 @@ namespace sexpresso {
 
     auto Sexp::addChildUnescaped(std::string str, int64_t startpos, int64_t endpos) -> void {
         this->addChild(Sexp::unescaped(std::move(str), startpos, endpos));
-        this->endpos += endpos;
     }
     auto Sexp::addChildUnescaped(std::string str, SexpAtomKind atomkind, int64_t startpos, int64_t endpos) -> void {
         this->addChild(Sexp::unescaped(std::move(str), atomkind, startpos, endpos));
-        this->endpos += endpos;
     }
 	auto Sexp::addExpression(std::string const& str) -> void {
 		auto err = std::string{};
@@ -534,7 +531,9 @@ namespace sexpresso {
         while(stack.size() != 1){
             auto topsexp = std::move(stack.top());
             stack.pop();
-            topsexp.endpos = endpos;
+            std::cout << "TOP: "<< topsexp.startpos << " " << topsexp.endpos << "\n";
+           // topsexp.endpos = 999;//endpos;
+            topsexp.endpos = topsexp.getChild(topsexp.childCount() -1).endpos;
             auto& top = stack.top();
             top.addChild(std::move(topsexp));
         }
@@ -595,10 +594,9 @@ namespace sexpresso {
                 if(i == str.end()) {
                     err = std::string{"Unterminated string literal"};
                     auto resultstr = std::string{iter + 1,str.end()};
-                    addString(sexprstack,resultstr,iter - str.begin(),i - str.begin(),quoted);
-
-                    int64_t len = static_cast<int64_t>(str.length() + 16);
-                    sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length()),len});
+                    addString(sexprstack,resultstr,iter - str.begin(), iter - str.begin() + resultstr.length() + 2,quoted);
+                    int64_t len = static_cast<int64_t>(str.length() + 2 + 16);
+                    sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length() + 2),len});
 
                     closeStack(sexprstack, nextiter - str.begin());
                     return std::move(sexprstack.top());
@@ -715,8 +713,8 @@ namespace sexpresso {
         if(sexprstack.size() != 1) {
             err = std::string{"not enough s-expressions were closed by the end of parsing"};
             //return Sexp{};
-            int64_t len = static_cast<int64_t>(str.length() + 16);
-            sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length()),len});
+            int64_t len = static_cast<int64_t>(str.length() + 16 + 1);
+            sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length() + 1),len});
             closeStack(sexprstack, nextiter - str.begin());
         }
         return std::move(sexprstack.top());

@@ -13,21 +13,8 @@
 
 namespace sexpresso {
     enum class SexpValueKind : uint8_t { SEXP, ATOM };
-    enum class SexpSexpKind : uint8_t { NONE, VECTOR, COMPLEX };
-    enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING, CHAR, BINARY, OCTAL, HEX };
+    enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING };
     enum class SexpQuoteKind : uint8_t { NONE, SINGLEQUOTE, BACKQUOTE, FUNCQUOTE };
-    enum class SexpMacroSyntaxKind : uint8_t { NONE, COMMASPLICE, ATSPLICE, COMMADOTSPLICE };
-
-    struct SexpAttributes {
-        SexpValueKind kind;
-        SexpSexpKind sexpkind;
-        SexpAtomKind atomkind;
-        SexpQuoteKind quotekind;
-        SexpMacroSyntaxKind macrokind;
-
-        SexpAttributes();
-    };
-
 	struct SexpArgumentIterator;
 
 	struct Sexp {
@@ -39,14 +26,9 @@ namespace sexpresso {
         Sexp(std::string const& strval, int64_t startpos, int64_t endpos, SexpAtomKind atomkind);
 		Sexp(std::vector<Sexp> const& sexpval);
         Sexp(std::vector<Sexp> const& sexpval, int64_t startpos, int64_t endpos = 0);
-        /*
 		SexpValueKind kind;
-        SexpSexpKind sexpkind;
         SexpAtomKind atomkind;
         SexpQuoteKind quotekind;
-        SexpMacroSyntaxKind macrokind;
-        */
-        SexpAttributes attributes;
         int64_t startpos;
         int64_t endpos;
         struct { std::vector<Sexp> sexp; std::string str; int64_t startpos; int64_t endpos = 0;} value;

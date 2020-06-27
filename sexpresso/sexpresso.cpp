@@ -15,48 +15,36 @@
 #include <iostream>
 
 namespace sexpresso {
-    SexpAttributes::SexpAttributes()
-        : kind(SexpValueKind::SEXP),
-        sexpkind(SexpSexpKind::NONE),
-        atomkind(SexpAtomKind::NONE),
-        quotekind(SexpQuoteKind::NONE),
-        macrokind(SexpMacroSyntaxKind::NONE){}
-
 	Sexp::Sexp() {
-        this->attributes.kind = SexpValueKind::SEXP;
-        this->attributes.atomkind = SexpAtomKind::NONE;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
+		this->kind = SexpValueKind::SEXP;
+        this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
 	}
     Sexp::Sexp(int64_t startpos, int64_t endpos){
-        this->attributes.kind = SexpValueKind::SEXP;
-        this->attributes.atomkind = SexpAtomKind::NONE;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
+        this->kind = SexpValueKind::SEXP;
+        this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
         this->startpos = startpos;
         this->value.startpos = 0;
         this->endpos = endpos;
         this->value.endpos = 0;
     }
 	Sexp::Sexp(std::string const& strval) {
-        this->attributes.kind = SexpValueKind::ATOM;
-        this->attributes.atomkind = SexpAtomKind::SYMBOL;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
+        this->kind = SexpValueKind::ATOM;
+        this->atomkind = SexpAtomKind::SYMBOL;
+        this->quotekind = SexpQuoteKind::NONE;
 		this->value.str = escape(strval);
 	}
     Sexp::Sexp(std::string const& strval, SexpAtomKind atomkind) {
-        this->attributes.kind = SexpValueKind::ATOM;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
-        this->attributes.atomkind = atomkind;
+        this->kind = SexpValueKind::ATOM;
+        this->quotekind = SexpQuoteKind::NONE;
+        this->atomkind = atomkind;
         this->value.str = escape(strval);
     }
     Sexp::Sexp(std::string const& strval, int64_t startpos, int64_t endpos) {
-        this->attributes.kind = SexpValueKind::ATOM;
-        this->attributes.atomkind = SexpAtomKind::SYMBOL;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
+        this->kind = SexpValueKind::ATOM;
+        this->atomkind = SexpAtomKind::SYMBOL;
+        this->quotekind = SexpQuoteKind::NONE;
         this->value.str = escape(strval);
         this->startpos = startpos;
         this->value.startpos = 0;
@@ -64,10 +52,9 @@ namespace sexpresso {
         this->value.endpos = 0;
     }
     Sexp::Sexp(std::string const& strval, int64_t startpos, int64_t endpos, SexpAtomKind atomkind) {
-        this->attributes.kind = SexpValueKind::ATOM;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
-        this->attributes.atomkind = atomkind;
+        this->kind = SexpValueKind::ATOM;
+        this->quotekind = SexpQuoteKind::NONE;
+        this->atomkind = atomkind;
         this->value.str = escape(strval);
         this->startpos = startpos;
         this->value.startpos = 0;
@@ -75,17 +62,15 @@ namespace sexpresso {
         this->value.endpos = 0;
     }
 	Sexp::Sexp(std::vector<Sexp> const& sexpval) {
-        this->attributes.kind = SexpValueKind::SEXP;
-        this->attributes.atomkind = SexpAtomKind::NONE;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
+		this->kind = SexpValueKind::SEXP;
+        this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
 		this->value.sexp = sexpval;
 	}
     Sexp::Sexp(std::vector<Sexp> const& sexpval, int64_t startpos, int64_t endpos) {
-        this->attributes.kind = SexpValueKind::SEXP;
-        this->attributes.atomkind = SexpAtomKind::NONE;
-        this->attributes.quotekind = SexpQuoteKind::NONE;
-        this->attributes.sexpkind = SexpSexpKind::NONE;
+        this->kind = SexpValueKind::SEXP;
+        this->atomkind = SexpAtomKind::NONE;
+        this->quotekind = SexpQuoteKind::NONE;
         this->value.sexp = sexpval;
         this->startpos = startpos;
         this->value.startpos = 0;
@@ -93,8 +78,8 @@ namespace sexpresso {
         this->value.endpos = 0;
     }
 	auto Sexp::addChild(Sexp sexp) -> void {
-        if(this->attributes.kind == SexpValueKind::ATOM) {
-            this->attributes.kind = SexpValueKind::SEXP;
+        if(this->kind == SexpValueKind::ATOM) {
+			this->kind = SexpValueKind::SEXP;
             this->value.sexp.push_back(Sexp{std::move(this->value.str), this->startpos, this->endpos});
 		}
 		this->value.sexp.push_back(std::move(sexp));
@@ -121,7 +106,7 @@ namespace sexpresso {
 		for(auto&& c : sexp.value.sexp) this->addChild(std::move(c));
 	}
 	auto Sexp::childCount() const -> size_t {
-        switch(this->attributes.kind) {
+		switch(this->kind) {
 		case SexpValueKind::SEXP:
 			return this->value.sexp.size();
         case SexpValueKind::ATOM:
@@ -144,7 +129,7 @@ namespace sexpresso {
 	}
 
 	auto Sexp::getChildByPath(std::string const& path) -> Sexp* {
-        if(this->attributes.kind == SexpValueKind::ATOM) return nullptr;
+        if(this->kind == SexpValueKind::ATOM) return nullptr;
 
 		auto paths = splitPathString(path);
 
@@ -153,14 +138,14 @@ namespace sexpresso {
 			auto start = i;
 			for(auto& child : cur->value.sexp) {
 				auto brk = false;
-                switch(child.attributes.kind) {
+				switch(child.kind) {
                 case SexpValueKind::ATOM:
 					if(i == paths.end() - 1 && child.value.str == *i) return &child;
 					else continue;
 				case SexpValueKind::SEXP:
 					if(child.value.sexp.size() == 0) continue;
 					auto& fst = child.value.sexp[0];
-                    switch(fst.attributes.kind) {
+					switch(fst.kind) {
                     case SexpValueKind::ATOM:
 						if(fst.value.str == *i) {
 							cur = &child;
@@ -181,11 +166,11 @@ namespace sexpresso {
 
 	static auto findChild(Sexp& sexp, std::string name) -> Sexp* {
 		auto findPred = [&name](Sexp& s) {
-            switch(s.attributes.kind) {
+			switch(s.kind) {
 			case SexpValueKind::SEXP: {
 				if(s.childCount() == 0) return false;
 				auto& hd = s.getChild(0);
-                switch(hd.attributes.kind) {
+				switch(hd.kind) {
 				case SexpValueKind::SEXP:
 					return false;
                 case SexpValueKind::ATOM:
@@ -246,32 +231,13 @@ namespace sexpresso {
 		return ('"' + escape(s) + '"');
 	}
 
-    static auto stringSymbolToString(std::string const& s) -> std::string {
-        return s;
-    }
-
-    static auto stringScalarToString(std::string const& s, SexpAtomKind atomkind) -> std::string{
-        switch(atomkind){
-            case SexpAtomKind::CHAR:
-                return ("#\\"+s);
-            case SexpAtomKind::HEX:
-                return ("#x"+s);
-            case SexpAtomKind::OCTAL:
-                return ("#o"+s);
-            case SexpAtomKind::BINARY:
-                return ("#b"+s);
-            default:
-                return ("");
-        }
-    }
-
-    static auto stringStringToString(std::string const& s) -> std::string {
+    static auto stringAtomToString(std::string const& s) -> std::string {
         if(s.size() == 0) return std::string{"\"\""};
         return ('"' + escape(s) + '"');
     }
 
     static auto toStringImpl(Sexp const& sexp, std::ostringstream& ostream) -> void {
-        switch(sexp.attributes.quotekind){
+        switch(sexp.quotekind){
             case SexpQuoteKind::BACKQUOTE:
                 ostream << "`";
                 break;
@@ -283,33 +249,18 @@ namespace sexpresso {
                 break;
             default: break;
         }
-        switch(sexp.attributes.kind) {
+
+		switch(sexp.kind) {
         case SexpValueKind::ATOM:
-            switch(sexp.attributes.atomkind){
+            switch(sexp.atomkind){
                 case SexpAtomKind::STRING:
-                    ostream << stringStringToString(sexp.value.str);
-                break;
-                case SexpAtomKind::CHAR:
-                case SexpAtomKind::HEX:
-                case SexpAtomKind::OCTAL:
-                case SexpAtomKind::BINARY:
-                    ostream << stringScalarToString(sexp.value.str,sexp.attributes.atomkind);
+                    ostream << stringAtomToString(sexp.value.str);
                 break;
                 default:
-                ostream << stringSymbolToString(sexp.value.str);
+                ostream << stringValToString(sexp.value.str);
             }
 			break;
 		case SexpValueKind::SEXP:
-            switch(sexp.attributes.sexpkind){
-                case SexpSexpKind::VECTOR:
-                    ostream << "#";
-                break;
-                case SexpSexpKind::COMPLEX:
-                    ostream << "#c";
-                break;
-
-                default:break;
-            }
 			switch(sexp.value.sexp.size()) {
 			case 0:
 				ostream << "()";
@@ -333,9 +284,7 @@ namespace sexpresso {
 	auto Sexp::toString() const -> std::string {
 		auto ostream = std::ostringstream{};
 
-		// outer sexp does not get surrounded by ()
-
-        switch(this->attributes.quotekind){
+        switch(this->quotekind){
             case SexpQuoteKind::BACKQUOTE:
                 ostream << "`";
                 break;
@@ -348,18 +297,13 @@ namespace sexpresso {
             default: break;
         }
 
-        switch(this->attributes.kind) {
+		// outer sexp does not get surrounded by ()
+		switch(this->kind) {
         case SexpValueKind::ATOM:
-            switch(this->attributes.atomkind){
+            switch(this->atomkind){
                 case SexpAtomKind::STRING:
                     ostream << stringValToString(this->value.str);
                 break;
-            case SexpAtomKind::CHAR:
-            case SexpAtomKind::HEX:
-            case SexpAtomKind::OCTAL:
-            case SexpAtomKind::BINARY:
-                ostream << stringScalarToString(this->value.str,this->attributes.atomkind);
-            break;
             default:
                 ostream << stringValToString(this->value.str);
                 break;
@@ -375,15 +319,15 @@ namespace sexpresso {
 	}
 
 	auto Sexp::isString() const -> bool {
-        return this->attributes.kind == SexpValueKind::ATOM;
+        return this->kind == SexpValueKind::ATOM;
 	}
 
 	auto Sexp::isSexp() const -> bool {
-        return this->attributes.kind == SexpValueKind::SEXP;
+		return this->kind == SexpValueKind::SEXP;
 	}
 
 	auto Sexp::isNil() const -> bool {
-        return this->attributes.kind == SexpValueKind::SEXP && this->childCount() == 0;
+		return this->kind == SexpValueKind::SEXP && this->childCount() == 0;
 	}
 
 	static auto childrenEqual(std::vector<Sexp> const& a, std::vector<Sexp> const& b) -> bool {
@@ -396,8 +340,8 @@ namespace sexpresso {
 	}
 	
 	auto Sexp::equal(Sexp const& other) const -> bool {
-        if(this->attributes.kind != other.attributes.kind) return false;
-        switch(this->attributes.kind) {
+		if(this->kind != other.kind) return false;
+		switch(this->kind) {
 		case SexpValueKind::SEXP:
 			return childrenEqual(this->value.sexp, other.value.sexp);
         case SexpValueKind::ATOM:
@@ -411,14 +355,14 @@ namespace sexpresso {
 
 	auto Sexp::unescaped(std::string strval) -> Sexp {
 		auto s = Sexp{};
-        s.attributes.kind = SexpValueKind::ATOM;
+        s.kind = SexpValueKind::ATOM;
 		s.value.str = std::move(strval);
 		return std::move(s);
 	}
 
     auto Sexp::unescaped(std::string strval,int64_t startpos, int64_t endpos) -> Sexp {
         auto s = Sexp{};
-        s.attributes.kind = SexpValueKind::ATOM;
+        s.kind = SexpValueKind::ATOM;
         s.startpos = startpos;
         s.endpos = endpos;
         s.value.str = std::move(strval);
@@ -427,10 +371,10 @@ namespace sexpresso {
 
     auto Sexp::unescaped(std::string strval, SexpAtomKind atomkind, int64_t startpos, int64_t endpos) -> Sexp {
         auto s = Sexp{};
-        s.attributes.kind = SexpValueKind::ATOM;
+        s.kind = SexpValueKind::ATOM;
         s.startpos = startpos;
         s.endpos = endpos;
-        s.attributes.atomkind = atomkind;
+        s.atomkind = atomkind;
         s.value.str = std::move(strval);
         return std::move(s);
     }
@@ -448,7 +392,7 @@ namespace sexpresso {
 			case '(':
                 sexprstack.push(Sexp(iter - str.begin(), nextiter - str.begin()));
                 if(quoted != SexpQuoteKind::NONE){
-                    sexprstack.top().attributes.quotekind = quoted;
+                    sexprstack.top().quotekind = quoted;
                     quoted = SexpQuoteKind::NONE;
                 }
 				break;
@@ -509,7 +453,7 @@ namespace sexpresso {
                 int64_t x = i - str.begin();
                 sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), x);
                 if(quoted != SexpQuoteKind::NONE){
-                    sexprstack.top().value.sexp.back().attributes.quotekind = quoted;
+                    sexprstack.top().value.sexp.back().quotekind = quoted;
                     quoted = SexpQuoteKind::NONE;
                 }
 
@@ -563,10 +507,9 @@ namespace sexpresso {
                 auto x = symend - str.begin();
     //            std::cout << std::string{iter,symend} << " startpos = " << iter - str.begin() << " : endpos = " << x << "\n";
      //           std::cout << "dist is " << std::distance(iter,symend) << " symend = " << std::string{iter,symend}.length() << "\n";
-                std::cout << std::string{iter,symend};
                 top.addChild(Sexp{std::string{iter, symend}, iter - str.begin(),x});
                 if(quoted != SexpQuoteKind::NONE){
-                    top.value.sexp.back().attributes.quotekind = quoted;
+                    top.value.sexp.back().quotekind = quoted;
                     quoted = SexpQuoteKind::NONE;
                 }
 				nextiter = symend;
@@ -588,6 +531,8 @@ namespace sexpresso {
         while(stack.size() != 1){
             auto topsexp = std::move(stack.top());
             stack.pop();
+            std::cout << "TOP: "<< topsexp.startpos << " " << topsexp.endpos << "\n";
+           // topsexp.endpos = 999;//endpos;
             topsexp.endpos = topsexp.getChild(topsexp.childCount() -1).endpos;
             auto& top = stack.top();
             top.addChild(std::move(topsexp));
@@ -597,7 +542,7 @@ namespace sexpresso {
     void addString(std::stack<Sexp>& stack,std::string str, int64_t start, int64_t end, SexpQuoteKind quoted){
         stack.top().addChildUnescaped(std::move(str), SexpAtomKind::STRING, start, end);
         if(quoted != SexpQuoteKind::NONE){
-            stack.top().value.sexp.back().attributes.quotekind = quoted;
+            stack.top().value.sexp.back().quotekind = quoted;
             quoted = SexpQuoteKind::NONE;
         }
     }
@@ -607,9 +552,6 @@ namespace sexpresso {
         sexprstack.push(Sexp(0)); // root
         auto nextiter = str.begin();
         SexpQuoteKind quoted = SexpQuoteKind::NONE;
-        SexpAtomKind atomkind = SexpAtomKind::NONE;
-        SexpSexpKind sexpkind = SexpSexpKind::NONE;
-        SexpMacroSyntaxKind macrokind = SexpMacroSyntaxKind::NONE;
         for(auto iter = nextiter; iter != str.end(); iter = nextiter) {
             nextiter = iter + 1;
             if(std::isspace(*iter)) continue;
@@ -618,12 +560,8 @@ namespace sexpresso {
             case '(':
                 sexprstack.push(Sexp(iter - str.begin(), nextiter - str.begin()));
                 if(quoted != SexpQuoteKind::NONE){
-                    sexprstack.top().attributes.quotekind = quoted;
+                    sexprstack.top().quotekind = quoted;
                     quoted = SexpQuoteKind::NONE;
-                }
-                if(sexpkind != SexpSexpKind::NONE){
-                    sexprstack.top().attributes.sexpkind = sexpkind;
-                    sexpkind = SexpSexpKind::NONE;
                 }
                 break;
             case ')': {
@@ -644,24 +582,6 @@ namespace sexpresso {
             }
             case '`': {
                 quoted = SexpQuoteKind::BACKQUOTE;
-                break;
-            }
-            case ',':{
-                switch(*nextiter){
-                    case '@': {
-                        macrokind = SexpMacroSyntaxKind::ATSPLICE;
-                        nextiter += 1;
-                        break;
-                    }
-                    case '.': {
-                        macrokind = SexpMacroSyntaxKind::COMMADOTSPLICE;
-                        nextiter += 1;
-                        break;
-                    default:
-                        macrokind = SexpMacroSyntaxKind::COMMASPLICE;
-                        break;
-                    }
-                }
                 break;
             }
             case '"': {
@@ -724,7 +644,7 @@ namespace sexpresso {
                 int64_t x = i - str.begin();
                 sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), x);
                 if(quoted != SexpQuoteKind::NONE){
-                    sexprstack.top().value.sexp.back().attributes.quotekind = quoted;
+                    sexprstack.top().value.sexp.back().quotekind = quoted;
                     quoted = SexpQuoteKind::NONE;
                 }
 
@@ -743,45 +663,6 @@ namespace sexpresso {
                 switch(*nextiter){
                     case '\'': {
                         quoted = SexpQuoteKind::FUNCQUOTE;
-                        nextiter += 1;
-                        willbreak = true;
-                        break;
-                    }
-                    case '\\': {
-                        atomkind = SexpAtomKind::CHAR;
-                        nextiter += 1;
-                        willbreak = true;
-                        break;
-                    }
-                    case 'b':
-                    case 'B': {
-                        atomkind = SexpAtomKind::BINARY;
-                        nextiter += 1;
-                        willbreak = true;
-                        break;
-                    }
-                    case 'O':
-                    case 'o': {
-                        atomkind = SexpAtomKind::OCTAL;
-                        nextiter += 1;
-                        willbreak = true;
-                        break;
-                    }
-                    case 'X':
-                    case 'x': {
-                        atomkind = SexpAtomKind::HEX;
-                        nextiter += 1;
-                        willbreak = true;
-                        break;
-                    }
-                    case '(': {
-                        sexpkind = SexpSexpKind::VECTOR;
-                        willbreak = true;
-                        break;
-                    }
-                    case 'C':
-                    case 'c': {
-                        sexpkind = SexpSexpKind::COMPLEX;
                         nextiter += 1;
                         willbreak = true;
                         break;
@@ -820,18 +701,12 @@ namespace sexpresso {
                 auto symend = std::find_if(iter, str.end(), [](char const& c) { return std::isspace(c) || c == ')' || c == '('; });
                 auto& top = sexprstack.top();
                 auto x = symend - str.begin();
-                std::cout << std::string{iter,symend};
 
                 top.addChild(Sexp{std::string{iter, symend}, iter - str.begin(),x});
                 if(quoted != SexpQuoteKind::NONE){
-                    top.value.sexp.back().attributes.quotekind = quoted;
+                    top.value.sexp.back().quotekind = quoted;
                     quoted = SexpQuoteKind::NONE;
                 }
-                if(atomkind != SexpAtomKind::NONE){
-                    top.value.sexp.back().attributes.atomkind = atomkind;
-                    atomkind = SexpAtomKind::NONE;
-                }
-
                 nextiter = symend;
             }
         }

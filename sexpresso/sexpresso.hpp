@@ -15,8 +15,8 @@ namespace sexpresso {
     enum class SexpValueKind : uint8_t { SEXP, ATOM };
     enum class SexpSexpKind : uint8_t { NONE, VECTOR, COMPLEX };
     enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING, CHAR, BINARY, OCTAL, HEX };
-    enum class SexpAttributeKind : uint8_t{ QUOTE, BACKQUOTE, FUNCQUOTE, COMMASPLICE, ATSPLICE, DOTSPLICE };
-
+    enum class SexpAttributeKind : uint8_t { QUOTE, BACKQUOTE, FUNCQUOTE, COMMASPLICE, ATSPLICE, DOTSPLICE };
+    enum class SexpressoPrintMode : uint8_t { NO_TOPLEVEL_PARENS, TOP_LEVEL_PARENS };
 	struct SexpArgumentIterator;
 
 	struct Sexp {
@@ -47,7 +47,7 @@ namespace sexpresso {
 		auto getChildByPath(std::string const& path) -> Sexp*; // unsafe! careful to not have the result pointer outlive the scope of the Sexp object
 		auto createPath(std::vector<std::string> const& path) -> Sexp&;
 		auto createPath(std::string const& path) -> Sexp&;
-		auto toString() const -> std::string;
+        auto toString(SexpressoPrintMode printmode = SexpressoPrintMode::NO_TOPLEVEL_PARENS) const -> std::string;
 		auto isString() const -> bool;
 		auto isSexp() const -> bool;
 		auto isNil() const -> bool;

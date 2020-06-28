@@ -326,7 +326,7 @@ namespace sexpresso {
 		}
 	}
 
-	auto Sexp::toString() const -> std::string {
+    auto Sexp::toString(SexpressoPrintMode printmode) const -> std::string {
 		auto ostream = std::ostringstream{};
 
 		// outer sexp does not get surrounded by ()
@@ -372,10 +372,41 @@ namespace sexpresso {
             }
             break;
 		case SexpValueKind::SEXP:
-			for(auto i = this->value.sexp.begin(); i != this->value.sexp.end(); ++i) {
-				toStringImpl(*i, ostream);
-				if(i != this->value.sexp.end()-1) ostream << ' ';
-			}
+            switch(this->sexpkind){
+                case SexpSexpKind::VECTOR:
+                    ostream << "#";
+                break;
+                case SexpSexpKind::COMPLEX:
+                    ostream << "#c";
+                break;
+
+                default:break;
+            }
+            if(printmode == SexpressoPrintMode::TOP_LEVEL_PARENS){
+                switch(this->value.sexp.size()) {
+                case 0:
+                    ostream << "()";
+                    break;
+                case 1:
+                    ostream << '(';
+                    toStringImpl(this->value.sexp[0], ostream);
+                    ostream <<  ')';
+                    break;
+                default:
+                    ostream << '(';
+                    for(auto i = this->value.sexp.begin(); i != this->value.sexp.end(); ++i) {
+                        toStringImpl(*i, ostream);
+                        if(i != this->value.sexp.end()-1) ostream << ' ';
+                    }
+                    ostream << ')';
+                }
+            }
+            else {
+                for(auto i = this->value.sexp.begin(); i != this->value.sexp.end(); ++i) {
+                    toStringImpl(*i, ostream);
+                    if(i != this->value.sexp.end()-1) ostream << ' ';
+                }
+            }
 		}
 		return ostream.str();
 	}

@@ -8,7 +8,6 @@
 #include "sexpresso.hpp"
 
 #include <cctype>
-#include <stack>
 #include <algorithm>
 #include <sstream>
 #include <array>

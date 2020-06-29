@@ -1,12 +1,9 @@
 // Author: Isak Andersson 2016 bitpuffin dot com
-
-#ifndef SEXPRESSO_OPT_OUT_PIKESTYLE
 #include <vector>
 #include <string>
 #include <cstdint>
-#endif
 #include "sexpresso.hpp"
-
+#include <stack>
 #include <cctype>
 #include <algorithm>
 #include <sstream>
@@ -421,6 +418,11 @@ namespace sexpresso {
     }
 
     auto parse(std::string const& str, std::string& err) -> Sexp {
+        std::string errsymbol = ":sexpresso-error";
+        return parse(str, err, errsymbol);
+    }
+
+    auto parse(std::string const& str, std::string& err, std::string& errsymbol) -> Sexp {
         auto sexprstack = std::stack<Sexp>{};
         sexprstack.push(Sexp(0)); // root
         auto nextiter = str.begin();
@@ -494,8 +496,8 @@ namespace sexpresso {
                     auto resultstr = std::string{iter + 1,str.end()};
                     addString(sexprstack,resultstr,iter - str.begin(), iter - str.begin() + resultstr.length() + 2, attribs);
                     attribs.clear();
-                    int64_t len = static_cast<int64_t>(str.length() + 2 + 16);
-                    sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length() + 2),len});
+                    int64_t len = static_cast<int64_t>(str.length() + 2 + errsymbol.length());
+                    sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length() + 2), len});
 
                     closeStack(sexprstack, nextiter - str.begin());
                     return std::move(sexprstack.top());
@@ -512,8 +514,8 @@ namespace sexpresso {
                             auto resultstr = std::string{iter + 1,i};
                             addString(sexprstack,resultstr,iter - str.begin(),i - str.begin(), attribs);
                             attribs.clear();
-                            int64_t len = static_cast<int64_t>(str.length() + 16);
-                            sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length()),len});
+                            int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
+                            sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
 
                             closeStack(sexprstack, nextiter - str.begin());
                             return std::move(sexprstack.top());
@@ -524,8 +526,8 @@ namespace sexpresso {
                             auto resultstr = std::string{iter + 1,i};
                             addString(sexprstack,resultstr,iter - str.begin(),i - str.begin(), attribs);
                             attribs.clear();
-                            int64_t len = static_cast<int64_t>(str.length() + 16);
-                            sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length()),len});
+                            int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
+                            sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
 
                             closeStack(sexprstack, nextiter - str.begin());
                             return std::move(sexprstack.top());
@@ -615,8 +617,8 @@ namespace sexpresso {
                         }
                         if(i == str.end()) {
                             err = std::string{"Unclosed block comment"};
-                            int64_t len = static_cast<int64_t>(str.length() + 16);
-                            sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length()),len});
+                            int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
+                            sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
 
                             closeStack(sexprstack, nextiter - str.begin());
                             return std::move(sexprstack.top());
@@ -647,8 +649,8 @@ namespace sexpresso {
         if(sexprstack.size() != 1) {
             err = std::string{"not enough s-expressions were closed by the end of parsing"};
             //return Sexp{};
-            int64_t len = static_cast<int64_t>(str.length() + 16 + 1);
-            sexprstack.top().addChild(Sexp{":sexpresso-error",static_cast<int64_t>(str.length() + 1),len});
+            int64_t len = static_cast<int64_t>(str.length() + errsymbol.length() + 1);
+            sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length() + 1), len});
             closeStack(sexprstack, nextiter - str.begin());
         }
         return std::move(sexprstack.top());

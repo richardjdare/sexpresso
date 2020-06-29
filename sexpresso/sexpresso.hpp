@@ -1,15 +1,10 @@
+#ifndef SEXPRESSO_H
+#define SEXPRESSO_H
 // Author: Isak Andersson 2016 bitpuffin dot com
 
-// If you don't opt out, copy and paste dependencies before include
-#ifdef SEXPRESSO_OPT_OUT_PIKESTYLE
-#ifndef SEXPRESSO_HEADER
-#define SEXPRESSO_HEADER
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "sexpresso.hpp"
-#endif
-#endif
 
 namespace sexpresso {
     enum class SexpValueKind : uint8_t { SEXP, ATOM };
@@ -61,6 +56,7 @@ namespace sexpresso {
 //	auto parse(std::string const& str, std::string& err) -> Sexp;
 //	auto parse(std::string const& str) -> Sexp;
     auto parse(std::string const& str, std::string& err) -> Sexp;
+    auto parse(std::string const& str, std::string& err, std::string& errsymbol) -> Sexp;
 	auto escape(std::string const& str) -> std::string;
 
 	struct SexpArgumentIterator {
@@ -77,4 +73,5 @@ namespace sexpresso {
 		auto size() const -> size_t;
 		auto empty() const -> bool;
 	};
-}
+};
+#endif

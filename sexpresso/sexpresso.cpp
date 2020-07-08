@@ -488,7 +488,7 @@ namespace sexpresso {
                 auto i = iter+1;
                 auto start = i;
                 for(; i != str.end(); ++i) {
-                    if(*i == '\\') { ++i; continue; }
+                    if(*i == '\\' && (i + 1 != str.end())) { ++i; continue; }
                     if(*i == '"') break;
                 }
                 if(i == str.end()) {

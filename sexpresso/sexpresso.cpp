@@ -555,6 +555,8 @@ namespace sexpresso {
             case '#':{
                 //rjd: uses fall-through
                 bool willbreak = false;
+                if(nextiter == str.end()) break;
+
                 switch(*nextiter){
                     case '\'': {
                         attribs.push_back(SexpAttributeKind::FUNCQUOTE);

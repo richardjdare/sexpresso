@@ -604,20 +604,22 @@ namespace sexpresso {
                         break;
                     }
                     case '|': {
-                        auto nexti = iter + 1;
-                        int commentcount = 1;
-                        auto i = nexti;
-                        for(; i != str.end(); i = nexti) {
+                        auto nexti = iter;
+                        int commentcount = 0;
+                        for(auto i = nexti; i != str.end(); i=nexti){
                             nexti = i + 1;
-                            if(*i == '#' && *nexti == '|'){
-                                ++commentcount;
-                            }
-                            else if(*i == '|' && *nexti == '#'){
-                                --commentcount;
+                            if(nexti != str.end()){
+                                if(*i == '#' && *nexti == '|'){
+                                    ++commentcount;
+                                }
+                                else if(*i == '|' && *nexti == '#'){
+                                    --commentcount;
+                                }
                             }
                             if(commentcount == 0) break;
                         }
-                        if(i == str.end()) {
+
+                        if(nexti == str.end()) {
                             err = std::string{"Unclosed block comment"};
                             int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
                             sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
@@ -626,7 +628,7 @@ namespace sexpresso {
                             return std::move(sexprstack.top());
                             //return Sexp{};
                         }
-                        nextiter = i + 2;
+                        nextiter = nexti + 1;
                         willbreak = true;
                     }
                 }

@@ -433,7 +433,7 @@ namespace sexpresso {
 
         for(auto iter = nextiter; iter != str.end(); iter = nextiter) {
             nextiter = iter + 1;
-            if(std::isspace(*iter)) continue;
+            if(std::isspace(static_cast<unsigned char>(*iter))) continue;
             auto& cursexp = sexprstack.top();
             switch(*iter) {
             case '(':
@@ -636,7 +636,7 @@ namespace sexpresso {
                 [[clang::fallthrough]];
             }
              default:
-                auto symend = std::find_if(iter, str.end(), [](char const& c) { return std::isspace(c) || c == ')' || c == '('; });
+                auto symend = std::find_if(iter, str.end(), [](char const& c) { return std::isspace(static_cast<unsigned char>(c)) || c == ')' || c == '('; });
                 auto& top = sexprstack.top();
                 auto x = symend - str.begin();
                 top.addChild(Sexp{std::string{iter, symend}, iter - str.begin(),x});

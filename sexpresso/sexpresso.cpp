@@ -470,6 +470,7 @@ namespace sexpresso {
                 break;
             }
             case ',':{
+                if(nextiter == str.end()) break;
                 switch(*nextiter){
                     case '@': {
                         attribs.push_back(SexpAttributeKind::ATSPLICE);

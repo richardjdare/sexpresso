@@ -524,6 +524,9 @@ namespace sexpresso {
                             closeStack(sexprstack, nextiter - str.begin());
                             return std::move(sexprstack.top());
                         }
+                        /* lets not test escape chars until the parser can keep going after errors like this, while
+                          reporting back nonlethal problems it encountered.
+
                         auto pos = std::find(escape_chars.begin(), escape_chars.end(), *it);
                         if(pos == escape_chars.end()) {
                             err = std::string{"invalid escape char '"} + *it + '\'';
@@ -537,6 +540,8 @@ namespace sexpresso {
                             return std::move(sexprstack.top());
                         }
                         resultstr.push_back(escape_vals[pos - escape_chars.begin()]);
+                        */
+                        resultstr.push_back(*it);
                         break;
                     }
                     default:

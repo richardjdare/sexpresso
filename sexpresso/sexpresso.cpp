@@ -541,6 +541,7 @@ namespace sexpresso {
                         }
                         resultstr.push_back(escape_vals[pos - escape_chars.begin()]);
                         */
+                        resultstr.push_back('\\');
                         resultstr.push_back(*it);
                         break;
                     }

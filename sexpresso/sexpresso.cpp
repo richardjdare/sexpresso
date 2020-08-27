@@ -255,6 +255,11 @@ namespace sexpresso {
         return ('"' + escape(s) + '"');
     }
 
+    static auto stringPathnameToString(std::string const& s) -> std::string {
+        if(s.size() == 0) return std::string{"#p\"\""};
+        return ("#p\"" + escape(s) + '"');
+    }
+
     static auto toStringImpl(Sexp const& sexp, std::ostringstream& ostream, SexpressoPrintMode printmode) -> void {
         for(SexpAttributeKind k : sexp.attributes){
             switch(k){
@@ -283,6 +288,9 @@ namespace sexpresso {
                 switch(sexp.atomkind){
                     case SexpAtomKind::STRING:
                         ostream << stringStringToString(sexp.value.str);
+                    break;
+                    case SexpAtomKind::PATHNAME:
+                        ostream << stringPathnameToString(sexp.value.str);
                     break;
                     case SexpAtomKind::CHAR:
                     case SexpAtomKind::HEX:
@@ -415,8 +423,10 @@ namespace sexpresso {
         }
     }
 
-    void addString(std::stack<Sexp>& stack,std::string str, int64_t start, int64_t end, std::vector<SexpAttributeKind>&attribs){
-        stack.top().addChildUnescaped(std::move(str), SexpAtomKind::STRING, start, end);
+    void addStringOrPathname(std::stack<Sexp>& stack,std::string str, int64_t start, int64_t end, std::vector<SexpAttributeKind>&attribs, SexpAtomKind atomKind = SexpAtomKind::STRING){
+        SexpAtomKind stringKind = SexpAtomKind::STRING;
+        if(atomKind == SexpAtomKind::PATHNAME) stringKind = SexpAtomKind::PATHNAME;
+        stack.top().addChildUnescaped(std::move(str),stringKind, start, end);
         stack.top().value.sexp.back().attributes = attribs;
     }
 
@@ -498,8 +508,10 @@ namespace sexpresso {
                 if(i == str.end()) {
                     err = std::string{"Unterminated string literal"};
                     auto resultstr = std::string{iter + 1,str.end()};
-                    addString(sexprstack,resultstr,iter - str.begin(), iter - str.begin() + resultstr.length() + 2, attribs);
+
+                    addStringOrPathname(sexprstack,resultstr,iter - str.begin(), iter - str.begin() + resultstr.length() + 2, attribs, atomkind);
                     attribs.clear();
+                    atomkind = SexpAtomKind::NONE;
                     int64_t len = static_cast<int64_t>(str.length() + 2 + errsymbol.length());
                     sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length() + 2), len});
 
@@ -516,8 +528,9 @@ namespace sexpresso {
                         if(it == i) {
                             err = std::string{"Unfinished escape sequence at the end of the string"};
                             auto resultstr = std::string{iter + 1,i};
-                            addString(sexprstack,resultstr,iter - str.begin(),i - str.begin(), attribs);
+                            addStringOrPathname(sexprstack,resultstr,iter - str.begin(),i - str.begin(), attribs, atomkind);
                             attribs.clear();
+                            atomkind = SexpAtomKind::NONE;
                             int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
                             sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
 
@@ -550,10 +563,12 @@ namespace sexpresso {
                     }
                 }
 
-                int64_t x = i - str.begin();
-                sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), x);
-                sexprstack.top().value.sexp.back().attributes = attribs;
+                int64_t stringEndPos = i - str.begin();
+                addStringOrPathname(sexprstack,resultstr,iter - str.begin(), stringEndPos,attribs,atomkind);
+        //        sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), stringEndPos);
+        //        sexprstack.top().value.sexp.back().attributes = attribs;
                 attribs.clear();
+                sexpkind = SexpSexpKind::NONE;
 
                 nextiter = i + 1;
                 break;
@@ -609,6 +624,13 @@ namespace sexpresso {
                     case 'C':
                     case 'c': {
                         sexpkind = SexpSexpKind::COMPLEX;
+                        nextiter += 1;
+                        willbreak = true;
+                        break;
+                    }
+                    case 'P':
+                    case 'p':{
+                        atomkind = SexpAtomKind::PATHNAME;
                         nextiter += 1;
                         willbreak = true;
                         break;

@@ -1,4 +1,5 @@
 // Author: Isak Andersson 2016 bitpuffin dot com
+// hacked to pieces by richardjdare 2020
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -85,14 +86,17 @@ namespace sexpresso {
 
     auto Sexp::addChild(std::string str) -> void {
         this->addChild(Sexp{std::move(str), this->startpos});
+        this->value.sexp.back().atomkind = SexpAtomKind::STRING;
     }
 
     auto Sexp::addChildUnescaped(std::string str) -> void {
         this->addChild(Sexp::unescaped(std::move(str)));
+        this->value.sexp.back().atomkind = SexpAtomKind::STRING;
     }
 
     auto Sexp::addChildUnescaped(std::string str, int64_t startpos, int64_t endpos) -> void {
         this->addChild(Sexp::unescaped(std::move(str), startpos, endpos));
+        this->value.sexp.back().atomkind = SexpAtomKind::STRING;
     }
 
     auto Sexp::addChildUnescaped(std::string str, SexpAtomKind atomkind, int64_t startpos, int64_t endpos) -> void {
@@ -563,7 +567,7 @@ namespace sexpresso {
                     }
                 }
 
-                int64_t stringEndPos = i - str.begin();
+                int64_t stringEndPos = i - str.begin() + 1;
                 addStringOrPathname(sexprstack,resultstr,iter - str.begin(), stringEndPos,attribs,atomkind);
         //        sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), stringEndPos);
         //        sexprstack.top().value.sexp.back().attributes = attribs;

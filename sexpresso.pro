@@ -10,3 +10,6 @@ HEADERS += \
 
 SOURCES += \
     sexpresso/sexpresso.cpp \
+
+SUBDIRS += \
+    sexpresso-project.pro

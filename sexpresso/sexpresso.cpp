@@ -220,6 +220,9 @@ namespace sexpresso {
 
     static const std::array<char, 11> escape_chars = { '\'', '"',  '?', '\\',  'a',  'b',  'f',  'n',  'r',  't',  'v' };
     static const std::array<char, 11> escape_vals  = { '\'', '"', '\?', '\\', '\a', '\b', '\f', '\n', '\r', '\t', '\v' };
+    static const std::array<int, 3> sexpkind_sizes = {0, 1, 2};
+    static const std::array<int, 8> atomkind_sizes = {0, 0, 0, 2, 2, 2, 2, 2};
+    static const std::array<int, 6> attribkind_sizes={1, 1, 2, 1, 2, 2};
 
     static auto isEscapeValue(char c) -> bool {
         return std::find(escape_vals.begin(), escape_vals.end(), c) != escape_vals.end();
@@ -412,12 +415,7 @@ namespace sexpresso {
         return std::move(s);
     }
 
-    auto parse(std::string const& str) -> Sexp {
-        auto ignored_error = std::string{};
-        return parse(str, ignored_error);
-    }
-
-    void closeStack(std::stack<Sexp>& stack, const int64_t endpos){
+    void closeStack(std::stack<Sexp>& stack){
         while(stack.size() != 1){
             auto topsexp = std::move(stack.top());
             stack.pop();
@@ -432,6 +430,21 @@ namespace sexpresso {
         if(atomKind == SexpAtomKind::PATHNAME) stringKind = SexpAtomKind::PATHNAME;
         stack.top().addChildUnescaped(std::move(str),stringKind, start, end);
         stack.top().value.sexp.back().attributes = attribs;
+    }
+
+    long long adjustStartPos(long long initial, SexpAtomKind atomkind, SexpSexpKind sexpkind, std::vector<SexpAttributeKind>&attributes){
+        int adjustment = 0;
+        adjustment += sexpkind_sizes[static_cast<unsigned long long>(sexpkind)];
+        adjustment += atomkind_sizes[static_cast<unsigned long long>(atomkind)];
+        for(auto a : attributes){
+            adjustment += attribkind_sizes[static_cast<unsigned long long>(a)];
+        }
+        return initial - adjustment;
+    }
+
+    auto parse(std::string const& str) -> Sexp {
+        auto ignored_error = std::string{};
+        return parse(str, ignored_error);
     }
 
     auto parse(std::string const& str, std::string& err) -> Sexp {
@@ -453,8 +466,9 @@ namespace sexpresso {
             if(std::isspace(static_cast<unsigned char>(*iter))) continue;
             auto& cursexp = sexprstack.top();
             switch(*iter) {
-            case '(':
-                sexprstack.push(Sexp(iter - str.begin(), nextiter - str.begin()));
+            case '(': {
+                auto startpos = adjustStartPos(iter - str.begin(), atomkind, sexpkind, attribs);
+                sexprstack.push(Sexp(startpos, nextiter - str.begin()));
                 if(sexpkind != SexpSexpKind::NONE){
                     sexprstack.top().sexpkind = sexpkind;
                     sexpkind = SexpSexpKind::NONE;
@@ -462,6 +476,7 @@ namespace sexpresso {
                 sexprstack.top().attributes = attribs;
                 attribs.clear();
                 break;
+            }
             case ')': {
                 auto topsexp = std::move(sexprstack.top());
                 sexprstack.pop();
@@ -512,14 +527,14 @@ namespace sexpresso {
                 if(i == str.end()) {
                     err = std::string{"Unterminated string literal"};
                     auto resultstr = std::string{iter + 1,str.end()};
-
-                    addStringOrPathname(sexprstack,resultstr,iter - str.begin(), iter - str.begin() + resultstr.length() + 2, attribs, atomkind);
+                    auto startpos = adjustStartPos(iter - str.begin(), atomkind, sexpkind, attribs);
+                    addStringOrPathname(sexprstack,resultstr,startpos, startpos + resultstr.length() + 2, attribs, atomkind);
                     attribs.clear();
                     atomkind = SexpAtomKind::NONE;
                     int64_t len = static_cast<int64_t>(str.length() + 2 + errsymbol.length());
                     sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length() + 2), len});
 
-                    closeStack(sexprstack, nextiter - str.begin());
+                    closeStack(sexprstack);
                     return std::move(sexprstack.top());
                     //return Sexp{};
                 }
@@ -532,13 +547,14 @@ namespace sexpresso {
                         if(it == i) {
                             err = std::string{"Unfinished escape sequence at the end of the string"};
                             auto resultstr = std::string{iter + 1,i};
-                            addStringOrPathname(sexprstack,resultstr,iter - str.begin(),i - str.begin(), attribs, atomkind);
+                            auto startpos = adjustStartPos(iter - str.begin(), atomkind, sexpkind, attribs);
+                            addStringOrPathname(sexprstack,resultstr,startpos,i - str.begin(), attribs, atomkind);
                             attribs.clear();
                             atomkind = SexpAtomKind::NONE;
                             int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
                             sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
 
-                            closeStack(sexprstack, nextiter - str.begin());
+                            closeStack(sexprstack);
                             return std::move(sexprstack.top());
                         }
                         /* lets not test escape chars until the parser can keep going after errors like this, while
@@ -568,9 +584,8 @@ namespace sexpresso {
                 }
 
                 int64_t stringEndPos = i - str.begin() + 1;
-                addStringOrPathname(sexprstack,resultstr,iter - str.begin(), stringEndPos,attribs,atomkind);
-        //        sexprstack.top().addChildUnescaped(std::move(resultstr), SexpAtomKind::STRING, iter - str.begin(), stringEndPos);
-        //        sexprstack.top().value.sexp.back().attributes = attribs;
+                auto startpos = adjustStartPos(iter - str.begin(), atomkind, sexpkind, attribs);
+                addStringOrPathname(sexprstack,resultstr,startpos, stringEndPos,attribs,atomkind);
                 attribs.clear();
                 sexpkind = SexpSexpKind::NONE;
 
@@ -660,7 +675,7 @@ namespace sexpresso {
                             int64_t len = static_cast<int64_t>(str.length() + errsymbol.length());
                             sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length()), len});
 
-                            closeStack(sexprstack, nextiter - str.begin());
+                            closeStack(sexprstack);
                             return std::move(sexprstack.top());
                             //return Sexp{};
                         }
@@ -674,8 +689,9 @@ namespace sexpresso {
              default:
                 auto symend = std::find_if(iter, str.end(), [](char const& c) { return std::isspace(static_cast<unsigned char>(c)) || c == ')' || c == '('; });
                 auto& top = sexprstack.top();
-                auto x = symend - str.begin();
-                top.addChild(Sexp{std::string{iter, symend}, iter - str.begin(),x});
+                auto endpos = symend - str.begin();
+                auto startpos = adjustStartPos(iter - str.begin(), atomkind, sexpkind, attribs);
+                top.addChild(Sexp{std::string{iter, symend}, startpos, endpos});
                 top.value.sexp.back().attributes = attribs;
                 attribs.clear();
                 if(atomkind != SexpAtomKind::NONE){
@@ -691,7 +707,7 @@ namespace sexpresso {
             //return Sexp{};
             int64_t len = static_cast<int64_t>(str.length() + errsymbol.length() + 1);
             sexprstack.top().addChild(Sexp{errsymbol, static_cast<int64_t>(str.length() + 1), len});
-            closeStack(sexprstack, nextiter - str.begin());
+            closeStack(sexprstack);
         }
         return std::move(sexprstack.top());
     }

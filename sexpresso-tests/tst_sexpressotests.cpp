@@ -38,6 +38,7 @@ private slots:
     void nested_string_positions_1();
     void nested_string_positions_2();
     void nested_string_positions_multibyte();
+    void nested_string_positions_extended();
     void vector_string_positions();
     void complex_number_string_positions();
     void scalar_type_string_positions();
@@ -47,7 +48,9 @@ private slots:
     void block_comments();
     void nested_block_comments();
     void sexp_sexp_kind();
+    void sexp_kind_to_string();
     void sexp_atom_kind();
+    void atom_kind_to_string();
     void sexp_attribute_kind();
     void broken_sexp_missing_parens();
     void broken_sexp_too_many_parens();
@@ -247,7 +250,6 @@ void SexpressoTests::argument_iterator()
 
 //----------------------------------------------------------------------------
 // string_escape_sequences()
-// rjd: not sure about this one...
 //----------------------------------------------------------------------------
 void SexpressoTests::string_escape_sequences()
 {
@@ -386,6 +388,33 @@ void SexpressoTests::nested_string_positions_multibyte()
                        static_cast<unsigned int>(s1.endpos - s1.startpos)) == "\"Ⴔ Ⴕ Ⴖ Ⴗ Ⴘ Ⴙ Ⴚ Ⴛ Ⴜ Ⴝ Ⴞ Ⴟ Ⴠ Ⴡ Ⴢ\n\"");
 }
 
+//----------------------------------------------------------------------------
+// neste_string_positions_extended() - check string positions work on
+// nested sexps with extended attributes
+//----------------------------------------------------------------------------
+void SexpressoTests::nested_string_positions_extended()
+{
+    {
+        std::string str = "(defun foo (x) (print #p\"Ⴔ Ⴕ Ⴖ Ⴗ Ⴘ Ⴙ Ⴚ Ⴛ Ⴜ Ⴝ Ⴞ Ⴟ Ⴠ Ⴡ Ⴢ\n\"))";
+        std::string err;
+        auto s = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+
+        auto s1 = s.getChild(0).getChild(3).getChild(1);
+        QVERIFY(str.substr(static_cast<unsigned int>(s1.startpos),
+                           static_cast<unsigned int>(s1.endpos - s1.startpos)) == "#p\"Ⴔ Ⴕ Ⴖ Ⴗ Ⴘ Ⴙ Ⴚ Ⴛ Ⴜ Ⴝ Ⴞ Ⴟ Ⴠ Ⴡ Ⴢ\n\"");
+    }
+    {
+        std::string str = "(defun foo (x) (print '\"Ⴔ Ⴕ Ⴖ Ⴗ Ⴘ Ⴙ Ⴚ Ⴛ Ⴜ Ⴝ Ⴞ Ⴟ Ⴠ Ⴡ Ⴢ\n\"))";
+        std::string err;
+        auto s = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+
+        auto s1 = s.getChild(0).getChild(3).getChild(1);
+        QVERIFY(str.substr(static_cast<unsigned int>(s1.startpos),
+                           static_cast<unsigned int>(s1.endpos - s1.startpos)) == "'\"Ⴔ Ⴕ Ⴖ Ⴗ Ⴘ Ⴙ Ⴚ Ⴛ Ⴜ Ⴝ Ⴞ Ⴟ Ⴠ Ⴡ Ⴢ\n\"");
+    }
+}
 
 //----------------------------------------------------------------------------
 // vector_string_positions() - do the string positions handle sexps
@@ -400,7 +429,7 @@ void SexpressoTests::vector_string_positions()
 
     auto s1 = s.getChild(0).getChild(2);
     QVERIFY(str.substr(static_cast<unsigned int>(s1.startpos),
-                       static_cast<unsigned int>(s1.endpos)) == "#(1 2 3 4 5)");
+                       static_cast<unsigned int>(s1.endpos - s1.startpos)) == "#(1 2 3 4 5)");
 }
 
 //----------------------------------------------------------------------------
@@ -416,7 +445,7 @@ void SexpressoTests::complex_number_string_positions()
 
     auto s1 = s.getChild(0).getChild(2);
     QVERIFY(str.substr(static_cast<unsigned int>(s1.startpos),
-                       static_cast<unsigned int>(s1.endpos)) == "#c(1 2)");
+                       static_cast<unsigned int>(s1.endpos - s1.startpos)) == "#c(1 2)");
 }
 
 //----------------------------------------------------------------------------
@@ -433,7 +462,7 @@ void SexpressoTests::scalar_type_string_positions()
 
         auto bins = binsexp.getChild(0).getChild(2);
         QVERIFY(binstr.substr(static_cast<unsigned int>(bins.startpos),
-                           static_cast<unsigned int>(bins.endpos)) == "#b111");
+                           static_cast<unsigned int>(bins.endpos - bins.startpos)) == "#b111");
     }
 
     {
@@ -444,7 +473,7 @@ void SexpressoTests::scalar_type_string_positions()
 
         auto hexs = hexsexp.getChild(0).getChild(2);
         QVERIFY(hexstr.substr(static_cast<unsigned int>(hexs.startpos),
-                           static_cast<unsigned int>(hexs.endpos)) == "#xfff");
+                           static_cast<unsigned int>(hexs.endpos - hexs.startpos)) == "#xfff");
     }
 
     {
@@ -455,7 +484,7 @@ void SexpressoTests::scalar_type_string_positions()
 
         auto octs = octsexp.getChild(0).getChild(2);
         QVERIFY(octstr.substr(static_cast<unsigned int>(octs.startpos),
-                           static_cast<unsigned int>(octs.endpos)) == "#o111");
+                           static_cast<unsigned int>(octs.endpos - octs.startpos)) == "#o111");
     }
 
     {
@@ -466,7 +495,7 @@ void SexpressoTests::scalar_type_string_positions()
 
         auto chars = charsexp.getChild(0).getChild(2);
         QVERIFY(charstr.substr(static_cast<unsigned int>(chars.startpos),
-                           static_cast<unsigned int>(chars.endpos)) == "#\\A");
+                           static_cast<unsigned int>(chars.endpos - chars.startpos)) == "#\\A");
     }
 }
 
@@ -481,9 +510,9 @@ void SexpressoTests::quoted_sexp_string_positions()
     auto sexp = sexpresso::parse(str,err);
     QVERIFY(err.length() == 0);
 
-    auto chars = sexp.getChild(0).getChild(2);
-    QVERIFY(str.substr(static_cast<unsigned int>(chars.startpos),
-                       static_cast<unsigned int>(chars.endpos)) == "'(1 2 3 4)");
+    auto s1 = sexp.getChild(0).getChild(2);
+    QVERIFY(str.substr(static_cast<unsigned int>(s1.startpos),
+                       static_cast<unsigned int>(s1.endpos - s1.startpos)) == "'(1 2 3 4)");
 }
 
 //----------------------------------------------------------------------------
@@ -496,9 +525,9 @@ void SexpressoTests::macro_char_string_positions()
     auto sexp = sexpresso::parse(str,err);
     QVERIFY(err.length() == 0);
 
-    auto chars = sexp.getChild(0).getChild(2).getChild(0);
-    QVERIFY(str.substr(static_cast<unsigned int>(chars.startpos),
-                       static_cast<unsigned int>(chars.endpos)) == ",@test");
+    auto s1 = sexp.getChild(0).getChild(2).getChild(0);
+    QVERIFY(str.substr(static_cast<unsigned int>(s1.startpos),
+                       static_cast<unsigned int>(s1.endpos - s1.startpos)) == ",@test");
 }
 
 //----------------------------------------------------------------------------
@@ -574,8 +603,30 @@ void SexpressoTests::sexp_sexp_kind()
 }
 
 //----------------------------------------------------------------------------
+// sexp_kind_to_string() ensure the different kinds of sexp are correctly
+// converted to strings
+//----------------------------------------------------------------------------
+void SexpressoTests::sexp_kind_to_string()
+{
+    {
+        std::string str = "#(foo bar baz)";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+    {
+        std::string str = "#c(1 2)";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+}
+
+//----------------------------------------------------------------------------
 // sexp_atom_kind() - can the parser correctly distinguish between different
-// types of atoms
+// types of atoms?
 //----------------------------------------------------------------------------
 void SexpressoTests::sexp_atom_kind()
 {
@@ -634,6 +685,56 @@ void SexpressoTests::sexp_atom_kind()
         auto sexp = sexpresso::parse(str,err);
         QVERIFY(err.length() == 0);
         QVERIFY(sexp.getChild(0).atomkind == sexpresso::SexpAtomKind::PATHNAME);
+    }
+}
+
+//----------------------------------------------------------------------------
+// atom_kind_to_string() - ensure the different types of atom can be correctly
+// converted to strings
+//----------------------------------------------------------------------------
+void SexpressoTests::atom_kind_to_string()
+{
+    {
+        std::string str = "\"foo\"";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+    {
+        std::string str = "#\\A";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+    {
+        std::string str = "#b11";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+    {
+        std::string str = "#o11";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+    {
+        std::string str = "#xfff";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
+    }
+    {
+        std::string str = "#p\"path/to/nowhere\"";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.toString() == str);
     }
 }
 

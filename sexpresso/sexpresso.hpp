@@ -9,7 +9,7 @@
 namespace sexpresso {
     enum class SexpValueKind : uint8_t { SEXP, ATOM };
     enum class SexpSexpKind : uint8_t { NONE, VECTOR, COMPLEX };
-    enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING, CHAR, BINARY, OCTAL, HEX, PATHNAME};
+    enum class SexpAtomKind : uint8_t { NONE, SYMBOL, STRING, CHAR, BINARY, OCTAL, HEX, PATHNAME };
     enum class SexpAttributeKind : uint8_t { QUOTE, BACKQUOTE, FUNCQUOTE, COMMASPLICE, ATSPLICE, DOTSPLICE };
     enum class SexpressoPrintMode : uint8_t { NO_TOPLEVEL_PARENS, TOP_LEVEL_PARENS };
 	struct SexpArgumentIterator;

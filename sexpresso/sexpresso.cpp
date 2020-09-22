@@ -463,6 +463,23 @@ namespace sexpresso {
 
         for(auto iter = nextiter; iter != str.end(); iter = nextiter) {
             nextiter = iter + 1;
+
+            if(atomkind == SexpAtomKind::CHAR){
+                // single-character CHARs can be anything, even spaces
+                // so process them first. multi-character CHARs like #/Space can be treated as symbols
+                if(nextiter == str.end() || std::isspace(*nextiter) || *nextiter == '(' || *nextiter==')'){
+                    auto& top = sexprstack.top();
+                    auto endpos = nextiter - str.begin();
+                    auto startpos = adjustStartPos(iter - str.begin(), atomkind, sexpkind, attribs);
+                    top.addChild(Sexp{std::string{iter, nextiter}, startpos, endpos});
+                    top.value.sexp.back().attributes = attribs;
+                    attribs.clear();
+                    top.value.sexp.back().atomkind = atomkind;
+                    atomkind = SexpAtomKind::NONE;
+                    continue;
+                }
+            }
+
             if(std::isspace(static_cast<unsigned char>(*iter))) continue;
             auto& cursexp = sexprstack.top();
             switch(*iter) {
@@ -687,6 +704,7 @@ namespace sexpresso {
                 [[clang::fallthrough]];
             }
              default:
+
                 auto symend = std::find_if(iter, str.end(), [](char const& c) { return std::isspace(static_cast<unsigned char>(c)) || c == ')' || c == '('; });
                 auto& top = sexprstack.top();
                 auto endpos = symend - str.begin();

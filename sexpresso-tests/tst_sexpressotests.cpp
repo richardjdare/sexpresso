@@ -57,6 +57,8 @@ private slots:
     void broken_sexp_unterminated_string();
     void broken_sexp_unclosed_block_comment();
     void broken_sexp_unclosed_nested_block_comment();
+    void char_double_quote();
+
 };
 
 SexpressoTests::SexpressoTests()
@@ -651,8 +653,23 @@ void SexpressoTests::sexp_atom_kind()
         QVERIFY(err.length() == 0);
         QVERIFY(sexp.getChild(0).atomkind == sexpresso::SexpAtomKind::STRING);
     }
+
     {
         std::string str = "#\\A";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.getChild(0).atomkind == sexpresso::SexpAtomKind::CHAR);
+    }
+    {
+        std::string str = "#\\\"";
+        std::string err;
+        auto sexp = sexpresso::parse(str,err);
+        QVERIFY(err.length() == 0);
+        QVERIFY(sexp.getChild(0).atomkind == sexpresso::SexpAtomKind::CHAR);
+    }
+    {
+        std::string str = "#\\Space";
         std::string err;
         auto sexp = sexpresso::parse(str,err);
         QVERIFY(err.length() == 0);
@@ -858,6 +875,16 @@ void SexpressoTests::broken_sexp_unclosed_nested_block_comment()
     QVERIFY(sexp.toString() == "(defun foo (x) (print \"hello\")) :sexpresso-error");
 }
 
+//----------------------------------------------------------------------------
+// char_double_quote() - can the parser handle double quotes as a char? #/"
+//----------------------------------------------------------------------------
+void SexpressoTests::char_double_quote()
+{
+    std::string str = "(defparameter x #\\\")";
+    std::string err;
+    auto sexp = sexpresso::parse(str,err);
+    QVERIFY(err.length() == 0);
+}
 
 QTEST_APPLESS_MAIN(SexpressoTests)
 

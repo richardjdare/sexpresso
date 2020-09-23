@@ -1,4 +1,22 @@
 #+TITLE: Sexpresso
+-----
+
+
+*note from richardjdare:* I have hacked around with this fork for my own purposes, mainly to handle Common Lisp source code. *It may not do what you want!* Please take a look at the original [(https://github.com/BitPuffin/sexpresso)]
+
+My Changes:
+
+ * Allow newlines inside strings
+ * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.startpos and sexpresso::Sexp.endpos. These variables have no meaning in Sexps that were not created by the parser.
+ * Sexpresso now understands Common Lisp types: SYMBOL, STRING, CHAR, HEX, OCTAL, BIN, PATHNAME. Sexps can have a sub-type: VECTOR or COMPLEX.
+ * Sexpresso can now handle Common Lisp quoting syntax and macro characters. (QUOTE, BACKQUOTE, FUNCQUOTE, COMMASPLICE, ATSPLICE, DOTSPLICE) They are stored, in order of appearance, in a std::vector, "attributes", belonging to each Sexp node.
+ * The parser can handle Common Lisp single line, and nested block comments.
+ * The parser can handle broken input and will return the data it could successfully parse. When it hits a parse error, it closes off the sexps it successfully parsed and returns them. An identifying symbol is added at the point of error.
+ * I've ported the existing unit tests to use Qt's unit testing framework, and added a bunch of tests for the new functionality.
+ (end of richardjdare's note)
+
+
+-----
 
 Sexpresso is c++ centric [[https://en.wikipedia.org/wiki/S-expression][s-expression]] parser library. It uses value types and
 move semantics and thus manages to completely avoid calling new/delete, so it's probably
@@ -7,25 +25,6 @@ free from memory leaks!
 Sexpresso aims to be very simple, nodes are parsed either as s-expressions or strings, even
 a number would be parsed a string, so if you expect a node to be a number, please convert the
 string to a number!
-
------
-
-
-*note from richardjdare:* I have hacked around with this fork for my own purposes. *It may not do what you want!* Please take a look at the original [(https://github.com/BitPuffin/sexpresso)]
-
-My Changes:
-
- * Allow newlines inside strings
- * The parser records where in the original string each sexp came from. This is stored in sexpresso::Sexp.startpos and sexpresso::Sexp.endpos. These variables have no meaning in Sexps that were not created by the parser.
- * I distinguish between strings and symbols. SexpKind is now either SEXP or ATOM. ATOMS can be SYMBOL or STRING.
- * Sexps can be quoted. Either SINGLEQUOTE, BACKQUOTE, or FUNCQUOTE (Common Lisp #' function quote)
- * The parser can handle Common Lisp block comments.
- * Added ParseBroken(). When it hits a parse error, it closes off the sexps it sucessfully parsed and returns them. A symbol is added at the point of error.
- 
- (end of richardjdare's note)
-
-
------
 
 * How to use
 

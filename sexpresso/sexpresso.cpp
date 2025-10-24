@@ -214,6 +214,10 @@ namespace sexpresso {
         return this->value.sexp[idx];
     }
 
+    auto Sexp::getChild(size_t idx) const -> const Sexp& {
+        return this->value.sexp[idx];
+    }
+
     auto Sexp::getString() -> std::string& {
         return this->value.str;
     }

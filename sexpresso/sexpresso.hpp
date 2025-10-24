@@ -38,6 +38,7 @@ namespace sexpresso {
 		auto addExpression(std::string const& str) -> void;
 		auto childCount() const -> size_t;
 		auto getChild(size_t idx) -> Sexp&; // Call only if Sexp is a Sexp
+        const Sexp& getChild(size_t idx) const;
 		auto getString() -> std::string&;
 		auto getChildByPath(std::string const& path) -> Sexp*; // unsafe! careful to not have the result pointer outlive the scope of the Sexp object
 		auto createPath(std::vector<std::string> const& path) -> Sexp&;
